@@ -13,6 +13,12 @@ export default function App() {
   };
 
   const fetchInsights = async () => {
+    if (!API_KEY) {
+      console.error('Qloo API key missing');
+      alert('Missing API configuration - please check environment variables');
+      return;
+    }
+
     setLoading(true);
     setPredictions(null);
     try {
@@ -20,6 +26,13 @@ export default function App() {
         seed: Object.values(inputs).filter(Boolean),
         type: 'brands',
       };
+      
+      console.log('API Request:', {
+        url: `${BASE_URL}/predict`,
+        payload,
+        headers: { 'X-API-KEY': API_KEY?.slice(0, 5) + '...' }
+      });
+
       const res = await fetch(`${BASE_URL}/predict`, {
         method: 'POST',
         headers: {
@@ -28,8 +41,14 @@ export default function App() {
         },
         body: JSON.stringify(payload),
       });
+
+      console.log('API Response Status:', res.status);
       const data = await res.json();
-      setPredictions(data?.results || []);
+      console.log('API Response Data:', data);
+
+      // Qloo API returns predictions under 'brands' property
+      const brands = data?.brands || data?.results || [];
+      setPredictions(brands);
     } catch (err) {
       console.error('Failed to fetch insights', err);
     } finally {
@@ -51,14 +70,26 @@ export default function App() {
       <button className="w-full p-2 bg-blue-600 text-white rounded" onClick={fetchInsights} disabled={loading}>
         {loading ? 'Loading...' : 'Get My Taste Insights'}
       </button>
-      {predictions && (
+      {loading && <div className="text-center py-4">Analyzing your tastes...</div>}
+      
+      {!loading && predictions && (
         <div className="bg-white shadow p-4 rounded mt-4">
-          <h2 className="text-xl font-semibold">Predicted Brands You’ll Love:</h2>
-          <ul className="list-disc list-inside">
-            {predictions.map((brand, idx) => (
-              <li key={idx}>{brand.name}</li>
-            ))}
-          </ul>
+          <h2 className="text-xl font-semibold mb-2">Predicted Brands You’ll Love:</h2>
+          {predictions.length > 0 ? (
+            <ul className="list-disc list-inside">
+              {predictions.map((brand, idx) => (
+                <li key={idx} className="py-1">{brand.name}</li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-gray-500 italic">No brand predictions found - try different inputs</div>
+          )}
+        </div>
+      )}
+      
+      {!loading && !predictions && (
+        <div className="text-center text-gray-500 mt-4">
+          Submit your favorites to see brand predictions
         </div>
       )}
     </main>
