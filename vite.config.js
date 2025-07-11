@@ -1,8 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import ghPages from 'vite-plugin-gh-pages'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [react(), ghPages()],
-  base: '/qloo-insights-dashboard/',
-})
+  plugins: [react()],
+  base: '/insights-dashboard-qloo/', // must match GitHub repo name
+});
